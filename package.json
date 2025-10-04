@@ -2,8 +2,9 @@
   "name": "explorer-utils",
   "displayName": "Explorer Utils",
   "description": "add some extra actions for explorer context menu and status bar.",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "icon": "media/logo.png",
+  "publisher": "amburgao",
   "engines": {
     "vscode": "^1.104.0"
   },
