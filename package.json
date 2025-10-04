@@ -2,7 +2,7 @@
   "name": "explorer-utils",
   "displayName": "Explorer Utils",
   "description": "add some extra actions for explorer context menu and status bar.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "icon": "media/logo.png",
   "publisher": "amburgao",
   "engines": {
@@ -11,7 +11,9 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "configuration": [

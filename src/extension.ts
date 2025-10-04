@@ -1,28 +1,41 @@
-import { join } from 'path';
 import * as vscode from 'vscode';
+
+let gitignoreStatusBarItem: vscode.StatusBarItem;
+let hiddenFilesStatusBarItem: vscode.StatusBarItem;
 
 export function activate(context: vscode.ExtensionContext)
 {
 	const addToGitignore = vscode.commands.registerCommand('explorer-utils.add-to-gitignore', async (uri: vscode.Uri) =>
 	{
-		const relativePath = vscode.workspace.asRelativePath(uri);
-		const gitignoreUris = await vscode.workspace.findFiles(".gitignore");
-		if (gitignoreUris.length > 0)
+		try
 		{
-			const gitignore = gitignoreUris[0];
-			const oldContent = new TextDecoder().decode(await vscode.workspace.fs.readFile(gitignore));
-			if (oldContent.length === 0)
+			const relativePath = vscode.workspace.asRelativePath(uri);
+			const gitignoreUri = await vscode.workspace.findFiles(".gitignore", null, 1);
+			if (gitignoreUri[0] == null)
 			{
-				await vscode.workspace.fs.writeFile(gitignore, new TextEncoder().encode(relativePath));
-			} else
-			{
-				const newContent = new TextEncoder().encode(oldContent + "\n" + relativePath);
-				await vscode.workspace.fs.writeFile(gitignore, newContent);
+				const confirmation = await vscode.window.showInformationMessage('No .gitignore found. Create a new one?', 'Yes', 'No');
+				if (confirmation === 'No')
+				{
+					return;
+				}
+				if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0)
+				{
+					const workspaceFolderUri = vscode.workspace.workspaceFolders[0].uri;
+					await vscode.workspace.fs.writeFile(vscode.Uri.joinPath(workspaceFolderUri, ".gitignore"), new TextEncoder().encode(relativePath));
+					vscode.window.showInformationMessage(`Created .gitignore and added ${relativePath}.`);
+					return;
+				}
+				vscode.window.showErrorMessage("No workspace folder is open.");
+				return;
 			}
+
+			const oldContent = new TextDecoder().decode(await vscode.workspace.fs.readFile(gitignoreUri[0]));
+			const newContent = oldContent.length === 0 ? relativePath : oldContent + "\n" + relativePath;
+			await vscode.workspace.fs.writeFile(gitignoreUri[0], new TextEncoder().encode(newContent));
 			vscode.window.showInformationMessage(`Added ${relativePath} to .gitignore.`);
-		} else
+		} catch (error)
 		{
-			vscode.window.showInformationMessage('No .gitignore found.');
+			vscode.window.showErrorMessage(`Failed to add to .gitignore: ${error}`);
 		}
 	});
 
@@ -30,39 +43,27 @@ export function activate(context: vscode.ExtensionContext)
 	{
 		const config = vscode.workspace.getConfiguration();
 		const settingKey = 'explorer.excludeGitIgnore';
-
 		const currentValue = config.get<boolean>(settingKey);
 		const newValue = !currentValue;
-
 		await config.update(settingKey, newValue, vscode.ConfigurationTarget.Workspace);
-
 		vscode.window.showInformationMessage(`Explorer: exclude .gitignore is now ${newValue ? 'enabled' : 'disabled'}.`);
+		updateGitignoreStatus(!(newValue));
 	});
-
 
 	const toggleHiddenFiles = vscode.commands.registerCommand('explorer-utils.toggle-hidden-files', async () =>
 	{
 		const config = vscode.workspace.getConfiguration();
 		const settingKey = 'files.exclude';
-
 		const currentKeys = config.get<{ [key: string]: boolean }>(settingKey) || {};
 		const currentValues = Object.values(currentKeys);
 		const hasTrue = currentValues.includes(true);
 		const hasFalse = currentValues.includes(false);
 		const hasTrueAndFalse = hasTrue && hasFalse;
-
-		if (hasTrueAndFalse)
-		{
-			const newKeys = Object.fromEntries(Object.keys(currentKeys).map(key => [key, true]));
-			await config.update(settingKey, newKeys, vscode.ConfigurationTarget.Workspace);
-		} else
-		{
-			const newKeys = Object.fromEntries(Object.keys(currentKeys).map(key => [key, !(currentValues[0])]));
-			await config.update(settingKey, newKeys, vscode.ConfigurationTarget.Workspace);
-		}
-
-
+		const newKeys = hasTrueAndFalse ? Object.fromEntries(Object.keys(currentKeys).map(key => [key, true])) : Object.fromEntries(Object.keys(currentKeys).map(key => [key, !(currentValues[0])]));
+		await config.update(settingKey, newKeys, vscode.ConfigurationTarget.Workspace);
+		updateHiddenFilesStatus(currentValues[0]);
 	});
+
 	const hideFileFolder = vscode.commands.registerCommand('explorer-utils.hide-file-folder', async (uri: vscode.Uri) =>
 	{
 		const config = vscode.workspace.getConfiguration();
@@ -71,30 +72,68 @@ export function activate(context: vscode.ExtensionContext)
 		const currentKeys = config.get<{ [key: string]: boolean }>(settingKey) || {};
 		const newKeys = { ...currentKeys, [relativePath]: true };
 		await config.update(settingKey, newKeys, vscode.ConfigurationTarget.Workspace);
-
-
 	});
+
 	const garbageCollector = vscode.commands.registerCommand('explorer-utils.clear-garbage', async () =>
 	{
 		const config = vscode.workspace.getConfiguration();
 		const settingKey = 'explorerUtils.garbageList';
 		const garbageList = config.get<string[]>(settingKey) || [];
-
 		if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0)
 		{
 			const workspaceRootUri = vscode.workspace.workspaceFolders[0].uri;
-			const dirContent = await vscode.workspace.fs.readDirectory(workspaceRootUri);
-			console.log("Workspace directory content:", dirContent);
-			garbageList.forEach(async (value) =>
+			for (const value of garbageList)
 			{
-				console.log("Garbage item:", value);
-				await vscode.workspace.fs.delete(vscode.Uri.joinPath(workspaceRootUri, value), { recursive: true, useTrash: false });
-			});
+				try
+				{
+					await vscode.workspace.fs.delete(vscode.Uri.joinPath(workspaceRootUri, value), { recursive: true, useTrash: false });
+				} catch (error)
+				{
+					vscode.window.showErrorMessage(`Failed to delete ${value}: ${error}`);
+				}
+			}
+			await config.update(settingKey, [], vscode.ConfigurationTarget.Workspace);
+		} else
+		{
+			vscode.window.showErrorMessage('No workspace folder is open.');
 		}
-
-
 	});
-	context.subscriptions.push(addToGitignore, toggleGitignore, toggleHiddenFiles, hideFileFolder, garbageCollector);
+
+	gitignoreStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 99999);
+	gitignoreStatusBarItem.command = 'explorer-utils.toggle-gitignore';
+	const _config = vscode.workspace.getConfiguration();
+	const _settingKey = 'explorer.excludeGitIgnore';
+	const _currentValue = _config.get<boolean>(_settingKey);
+	updateGitignoreStatus(_currentValue);
+
+
+	hiddenFilesStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 99999);
+	hiddenFilesStatusBarItem.command = 'explorer-utils.toggle-hidden-files';
+	const config = vscode.workspace.getConfiguration();
+	const settingKey = 'files.exclude';
+	const currentKeys = config.get<{ [key: string]: boolean }>(settingKey) || {};
+	const currentValue = Object.values(currentKeys)[0];
+	updateHiddenFilesStatus(currentValue);
+
+
+	context.subscriptions.push(addToGitignore, toggleGitignore, toggleHiddenFiles, hideFileFolder, garbageCollector, gitignoreStatusBarItem, hiddenFilesStatusBarItem);
 }
+
+function updateGitignoreStatus(value: boolean | undefined): void
+{
+	const gitignoreState = value ? "$(eye)" : "$(eye-closed)";
+	gitignoreStatusBarItem.text = `.gitignore ${gitignoreState}`;
+
+	gitignoreStatusBarItem.show();
+};
+
+function updateHiddenFilesStatus(value: boolean | undefined): void
+{
+
+	const hiddenFilesState = value ? "$(eye)" : "$(eye-closed)";
+	hiddenFilesStatusBarItem.text = `Hidden files ${hiddenFilesState}`;
+
+	hiddenFilesStatusBarItem.show();
+};
 
 export function deactivate() { }
