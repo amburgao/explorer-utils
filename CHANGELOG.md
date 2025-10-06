@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Chore
+
+- **dev:** Enhance code quality and dev workflow
+- **dev-tools:** Configure pre-commit hooks for markdown linting
+
 <a name="v0.3.1"></a>
 
 ## [v0.3.1] - 2025-10-05
