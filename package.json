@@ -2,7 +2,7 @@
   "name": "explorer-utils",
   "displayName": "Explorer Utils",
   "description": "add some extra actions for explorer context menu and status bar.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "icon": "media/logo.png",
   "publisher": "amburgao",
   "engines": {
@@ -27,7 +27,7 @@
                 "node_modules"
               ]
             ],
-            "description": "List of files to be excluded on Clean Garbage command."
+            "description": "List of files and folder to be excluded.\n- Globs (ie. \"*.map\") are accepted just for files.\n- For directories, relative path must be used (ie. \"node_modules\")."
           }
         }
       }
