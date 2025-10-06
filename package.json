@@ -8,85 +8,65 @@
   "engines": {
     "vscode": "^1.104.0"
   },
-  "categories": [
-    "Other"
-  ],
-  "activationEvents": [
-    "onStartupFinished"
-  ],
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
   "main": "./out/extension.js",
   "contributes": {
-    "configuration": [
-      {
-        "title": "Explorer Utils",
-        "properties": {
-          "explorerUtils.garbageList": {
-            "type": "array",
-            "examples": [
-              [
-                "node_modules"
-              ]
-            ],
-            "description": "List of files and folder to be excluded.\n- Globs (ie. \"*.map\") are accepted just for files.\n- For directories, relative path must be used (ie. \"node_modules\")."
-          }
+    "configuration": [{
+      "title": "Explorer Utils",
+      "properties": {
+        "explorerUtils.garbageList": {
+          "type": "array",
+          "examples": [
+            ["node_modules"]
+          ],
+          "description": "List of files and folder to be excluded.\n- Globs (ie. \"*.map\") are accepted just for files.\n- For directories, relative path must be used (ie. \"node_modules\")."
         }
       }
-    ],
-    "commands": [
-      {
-        "title": "Add to .gitignore",
-        "command": "explorer-utils.add-to-gitignore"
-      },
-      {
-        "title": "Toggle .gitignore",
-        "command": "explorer-utils.toggle-gitignore"
-      },
-      {
-        "title": "Hide file/folder",
-        "command": "explorer-utils.hide-file-folder"
-      },
-      {
-        "title": "Toggle hidden files",
-        "command": "explorer-utils.toggle-hidden-files"
-      },
-      {
-        "title": "Clear workspace garbage",
-        "command": "explorer-utils.clear-garbage"
-      }
-    ],
+    }],
+    "commands": [{
+      "title": "Add to .gitignore",
+      "command": "explorer-utils.add-to-gitignore"
+    }, {
+      "title": "Toggle .gitignore",
+      "command": "explorer-utils.toggle-gitignore"
+    }, {
+      "title": "Hide file/folder",
+      "command": "explorer-utils.hide-file-folder"
+    }, {
+      "title": "Toggle hidden files",
+      "command": "explorer-utils.toggle-hidden-files"
+    }, {
+      "title": "Clear workspace garbage",
+      "command": "explorer-utils.clear-garbage"
+    }],
     "menus": {
-      "explorer/context": [
-        {
-          "command": "explorer-utils.add-to-gitignore",
-          "title": "Add to .gitignore",
-          "when": "explorerViewletFocus",
-          "group": "!explorer-utils"
-        },
-        {
-          "command": "explorer-utils.toggle-gitignore",
-          "title": "Toggle .gitignore",
-          "when": "explorerViewletFocus",
-          "group": "!explorer-utils"
-        },
-        {
-          "title": "Hide file/holder",
-          "command": "explorer-utils.hide-file-folder",
-          "when": "explorerViewletFocus",
-          "group": "!!explorer-utils"
-        },
-        {
-          "title": "Toggle hidden files",
-          "command": "explorer-utils.toggle-hidden-files",
-          "when": "explorerViewletFocus",
-          "group": "!!explorer-utils"
-        },
-        {
-          "title": "Clear workspace garbage",
-          "command": "explorer-utils.clear-garbage",
-          "when": "explorerViewletFocus",
-          "group": "!!explorer-utils"
-        }
-      ]
+      "explorer/context": [{
+        "command": "explorer-utils.add-to-gitignore",
+        "title": "Add to .gitignore",
+        "when": "explorerViewletFocus",
+        "group": "!explorer-utils"
+      }, {
+        "command": "explorer-utils.toggle-gitignore",
+        "title": "Toggle .gitignore",
+        "when": "explorerViewletFocus",
+        "group": "!explorer-utils"
+      }, {
+        "title": "Hide file/holder",
+        "command": "explorer-utils.hide-file-folder",
+        "when": "explorerViewletFocus",
+        "group": "!!explorer-utils"
+      }, {
+        "title": "Toggle hidden files",
+        "command": "explorer-utils.toggle-hidden-files",
+        "when": "explorerViewletFocus",
+        "group": "!!explorer-utils"
+      }, {
+        "title": "Clear workspace garbage",
+        "command": "explorer-utils.clear-garbage",
+        "when": "explorerViewletFocus",
+        "group": "!!explorer-utils"
+      }]
     }
   },
   "scripts": {
